@@ -1,6 +1,20 @@
 import { html, LitElement } from 'lit';
 import { property } from 'lit/decorators.js';
 
+function formatXml(xml: string, tab?: string): string {
+  let formatted = '';
+  let indent = '';
+
+  // eslint-disable-next-line no-param-reassign
+  if (!tab) tab = '\t';
+  xml.split(/>\s*</).forEach(node => {
+    if (node.match(/^\/\w/)) indent = indent.substring(tab!.length);
+    formatted += `${indent}<${node}>\r\n`;
+    if (node.match(/^<?\w[^>]*[^/]$/)) indent += tab;
+  });
+  return formatted.substring(1, formatted.length - 3);
+}
+
 export default class OscdSave extends LitElement {
   @property() doc!: XMLDocument;
 
@@ -8,9 +22,12 @@ export default class OscdSave extends LitElement {
 
   async run() {
     if (this.doc) {
-      const blob = new Blob([new XMLSerializer().serializeToString(this.doc)], {
-        type: 'application/xml',
-      });
+      const blob = new Blob(
+        [formatXml(new XMLSerializer().serializeToString(this.doc))],
+        {
+          type: 'application/xml',
+        }
+      );
 
       const a = document.createElement('a');
       a.download = this.docName;
